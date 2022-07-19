@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QDebug>
 #include <cstdlib>
+#include "flightrecorder.h"
 
 class test : public QObject
 {
@@ -13,12 +14,15 @@ class test : public QObject
 public:
 
     test(QObject *parent = nullptr);
+    ~test();
 
     float* getParam(int id) { return &params[id]; }
 
 private:
     float params[12];
     float generate_number(float min, float max);
+
+    FlightRecorder* fr;
 
 private slots:
     void update_params();

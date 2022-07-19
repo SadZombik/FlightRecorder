@@ -10,7 +10,6 @@
 #include <QVector>
 #include <ctime>
 #include <cstdlib>
-#include <iostream>
 
 // Общий виджет
 class FlightRecorder : public QWidget
@@ -24,18 +23,17 @@ public:
     void addParam(
         const QString &name,            // Название параметра
         const QString &abbreviation,    // Аббревиатура/сокращение
-        const float *p_param,           // Указатель на значение
         const quint16 section,          // Секция, графика (0-3)
         const float min = 0,
         const float max = 100,
         QColor color = Qt::white        // Цвет графика и шкалы
     );
 
-    void setTime(const int t) { m_time = t; }
+    void updateParam(quint16 id, const float val) { params_vector[id]->value = val; }
     void setMaxPoints(const int n) { max_points = n; }
 
 public slots:
-    void start() { timer->start(m_time); }
+    void start(int t = 33) { timer->start(t); }
     void stop() { timer->stop(); }
 
 private: // fields
@@ -43,7 +41,6 @@ private: // fields
 
     QHBoxLayout *layout;
     QTimer *timer;
-    int m_time = 33; // 30fps
 
     static const int spacing = 10;  // Отступ
     static quint16 NParams;         // Количество параметров
@@ -108,17 +105,19 @@ private: // inner classes
     };
 
     // Структура для атрибутов каждого параметра
-    typedef struct
+    struct Param
     {
+        static quint16 idGen;
+        quint16 id;
         QString name;
         QString abbreviation;
-        const float *p_param;
+        float value = 0;
         quint16 section;
         QColor color;
         float min;
         float max;
-        int divisions[11];
-    } Param;
+        float divisions[11];
+    };
 
     static CheckBox *checkbox;
     static Scales *scales;

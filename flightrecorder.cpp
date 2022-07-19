@@ -62,8 +62,15 @@ FlightRecorder::~FlightRecorder()
     delete layout;
 }
 
-void FlightRecorder::addParam(const QString &name, const QString &abbreviation, const float *p_param, const quint16 section, const float min, const float max, QColor color)
+void FlightRecorder::addParam(
+        const QString &name,
+        const QString &abbreviation,
+        const quint16 section,
+        const float min,
+        const float max,
+        QColor color)
 {
+    Param::idGen++;
     NParams++;
 
     if (color == Qt::white)
@@ -74,17 +81,17 @@ void FlightRecorder::addParam(const QString &name, const QString &abbreviation, 
     }
 
     Param *newParam = new Param;
+    newParam->id = Param::idGen;
     newParam->name = name;
     newParam->abbreviation = abbreviation;
-    newParam->p_param = p_param;
     newParam->section = section;
     newParam->color = color;
     newParam->min = min;
     newParam->max = max;
 
-    int d = (max-min)/10;
+    float d = static_cast<float>(max - min) / 10;
     for (int i = 0; i < 11; i++)
-        newParam->divisions[i] = max-d*i;
+        newParam->divisions[i] = max - d * i;
 
     params_vector.push_back(newParam);
     checkbox->addnew();
@@ -98,6 +105,7 @@ QVector<FlightRecorder::Param*> FlightRecorder::params_vector;
 FlightRecorder::CheckBox* FlightRecorder::checkbox = nullptr;
 FlightRecorder::Scales* FlightRecorder::scales = nullptr;
 FlightRecorder::Plots* FlightRecorder::plots = nullptr;
+quint16 FlightRecorder::Param::idGen = -1;
 
 // CHECKBOX
 void FlightRecorder::CheckBox::addnew()
@@ -194,7 +202,7 @@ void FlightRecorder::Plots::draw_graph(QPainter *plots_painter)
 {
     for (int par = 0; par < NParams; par++)
     {
-        graph[par].push_back(*params_vector[par]->p_param);
+        graph[par].push_back(params_vector[par]->value);
 
         if (graph[par].size() > max_points)
             graph[par].pop_front();
