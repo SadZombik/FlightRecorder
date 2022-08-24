@@ -4,127 +4,114 @@
 #include <QWidget>
 #include <QBoxLayout>
 #include <QPainter>
-#include <QCheckBox>
 #include <QTimer>
 #include <QDebug>
-#include <QVector>
+#include <QSettings>
+#include <QMessageBox>
+
 #include <ctime>
 #include <cstdlib>
+
+//#include "Mi17.h"
+//#include "Mi17_Model.h"
+
+#include "FM.h"
+
+class CheckBox;
+class Scales;
+class Plots;
 
 // Общий виджет
 class FlightRecorder : public QWidget
 {
     Q_OBJECT
 
-public:
-    FlightRecorder(quint16 width=0, quint16 height=0);
-    ~FlightRecorder();
-
-    void addParam(
-        const QString &name,            // Название параметра
-        const QString &abbreviation,    // Аббревиатура/сокращение
-        const quint16 section,          // Секция, графика (0-3)
-        const float min = 0,
-        const float max = 100,
-        QColor color = Qt::white        // Цвет графика и шкалы
-    );
-
-    void updateParam(quint16 id, const float val) { params_vector[id]->value = val; }
-    void setMaxPoints(const int n) { max_points = n; }
-
-public slots:
-    void start(int t = 33) { timer->start(t); }
-    void stop() { timer->stop(); }
-
-private: // fields
-    static quint16 w, h;
-
-    QHBoxLayout *layout;
-    QTimer *timer;
-
-    static const int spacing = 10;  // Отступ
-    static quint16 NParams;         // Количество параметров
-    static quint16 max_points;      // Максимальное количество точек графика
-
-    // Геометрия
-    static int _x, y1, y2;
-
-private: // inner classes
-    // Виджет с чекбоксами
-    class CheckBox : public QWidget
-    {
-    public:
-        CheckBox() { layout = new QVBoxLayout(this); }
-        ~CheckBox() { delete layout; }
-
-        void addnew();
-        QVector<QCheckBox*> checkbox_vector;
-        QVBoxLayout *layout;
-
-    private:
-        int m_width, m_height;
-        void paintEvent(QPaintEvent *event);
-    };
-
-    // Шкалы
-    class Scales : public QWidget
-    {
-    public:
-        Scales() {}
-        ~Scales() {}
-
-        void initScalesGeometry();
-        QRect sections[4];
-
-    private:
-        int m_width, m_height;
-        int ry, rx;
-        void paintEvent(QPaintEvent *event);
-        void draw_scales(QPainter *qp);
-    };
-
-    // Виджет рисующий область с графиками
-    class Plots : public QWidget
-    {
-    public:
-        Plots() {}
-        ~Plots() {}
-
-        void initPlotsGeometry();
-        void addNew() { graph.resize(NParams); }
-
-    private:
-        int m_width, m_height;
-        int dx = 5;     // Расстояние между точками по Х
-        int ry, rx;     // Размеры прямоугольников
-        QVector<QVector<float>> graph;
-        QRect sections[4];
-
-        void paintEvent(QPaintEvent *event);
-        void draw_graph(QPainter *qp);
-    };
-
+private:
     // Структура для атрибутов каждого параметра
     struct Param
     {
-        static quint16 idGen;
-        quint16 id;
         QString name;
         QString abbreviation;
-        float value = 0;
+        float *param_ptr;
         quint16 section;
         QColor color;
         float min;
         float max;
+
         float divisions[11];
+        bool rad_to_deg;
     };
 
-    static CheckBox *checkbox;
-    static Scales *scales;
-    static Plots *plots;
+public:
+    FlightRecorder(quint16 width = 0, quint16 height = 0);
+    ~FlightRecorder();
 
-    static QVector<Param*> params_vector;
+    void setMaxPoints(const unsigned int n) { max_points = n; }
+    void setSubPlots(const unsigned int sp);
+    void setChecked() { checked = true; }
+
+    quint16 getWidth()      const { return w; }
+    quint16 getHeight()     const { return h; }
+    quint16 getSpacing()    const { return spacing; }
+    quint16 getSubPlots()   const { return sub_plots; }
+    quint16 getMaxPoints()  const { return max_points; }
+    quint16 getCount()      const { return NParams; }
+    bool    getChecked()    const { return checked; }
+    bool    getCheckBox(int id) const;
+
+    int* getMoveControls() const;
+    const Param* getParam(int id);
+
+    void saveConfig();
+    void saveParamId(const int id) { config_list.push_back(id); }
+
+    FParam *fpar;
+    IParam *ipar;
+
+public slots:
+    void addParam(
+        const QString &name,            // Название параметра
+        const QString &abbreviation,    // Аббревиатура/сокращение
+        float *param_ptr,               // Указатель на параметр
+        const quint16 section,          // Секция, графика (0 - sub_plots)
+        const float min = 0,            // 0 - 100 для
+        const float max = 100,          // процентных параметров
+        const bool rad_to_deg = false,  // Перевод градусов в радианы
+        QColor color = Qt::white        // Цвет графика и шкалы
+    );
+    void deleteParam(int id = 0);
+    void start(const int t = 33) { timer->start(t); }
+    void stop() { timer->stop(); }
+
+private:
+    void read_config();
+    QSettings *ini;
+    QList<int> config_list;
+
+    quint16 w, h;
+    int move_x, move_y;
+    int c_move_x, c_move_y;
+
+    QHBoxLayout *layout;
+    QTimer *timer;
+
+    quint16 NParams = 0;        // Количество параметров
+    quint16 max_points = 100;   // Максимальное количество точек графика
+    quint16 sub_plots = 1;      // Количество секций с графиками
+    const quint16 spacing = 10; // Отступ
+
+    // Флаги
+    bool dark_theme = false;
+    bool checked = false;
+
+    // Виджеты
+    CheckBox *checkbox;
+    Scales *scales;
+    Plots *plots;
+
+    QVector<Param*> params_vector;      
 };
+
 
 #endif // FLIGHTRECORDER_H
 

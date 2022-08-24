@@ -16,12 +16,23 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    checkbox.cpp \
+    controlwidget.cpp \
     flightrecorder.cpp \
+    fr_controls.cpp \
     main.cpp \
+    plots.cpp \
+    scales.cpp \
     test.cpp
 
 HEADERS += \
+    FM.h \
+    checkbox.h \
+    controlwidget.h \
     flightrecorder.h \
+    fr_controls.h \
+    plots.h \
+    scales.h \
     test.h
 
 # Default rules for deployment.
